@@ -1,0 +1,6 @@
+tensorflow>=2.15,<3
+numpy>=1.26
+pandas>=2.0
+matplotlib>=3.7
+requests>=2.31
+streamlit>=1.35
