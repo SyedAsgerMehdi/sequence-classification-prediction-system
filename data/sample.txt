@@ -1,0 +1,9 @@
+ROMEO: What light through yonder window breaks?
+JULIET: It is the east, and Juliet is the sun.
+ROMEO: Arise, fair sun, and kill the envious moon.
+JULIET: O Romeo, Romeo, wherefore art thou Romeo?
+ROMEO: Shall I hear more, or shall I speak at this?
+The night is peaceful and the stars are bright.
+Machine learning learns patterns from sequential data.
+A recurrent neural network processes information step by step.
+LSTM and GRU models can remember useful information for longer sequences.
