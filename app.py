@@ -35,11 +35,13 @@ with tab1:
         st.dataframe(pd.DataFrame(readable_predictions,columns=["Character","Probability"]),use_container_width=True)
 
     st.divider()
-    st.subheader("Fixed-prompt comparison")
-    prompt=st.selectbox(
-        "Choose a prompt",
-        ["ROMEO: ", "To be, or not to be: ", "KING: "]
+    st.subheader("Prompt comparison")
+    fixed_prompt=st.selectbox(
+        "Choose a default prompt",
+        ["Romeo", "To be or not to be", "King"]
     )
+    custom_prompt=st.text_input("Enter your own prompt")
+    prompt=custom_prompt.strip() or fixed_prompt
     comparison_top_k=st.slider("Candidates per architecture",1,5,3)
     if st.button("Compare all architectures"):
         comparison_columns=st.columns(3)
