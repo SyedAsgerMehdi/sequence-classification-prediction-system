@@ -31,9 +31,17 @@ A Simple RNN maintains a hidden state but can experience vanishing/exploding gra
 The experiment records:
 - Validation accuracy
 - Validation loss
+- Held-out test accuracy
+- Held-out test loss and perplexity
 - Training time
 - Trainable parameter count
-- Generated sequence quality
+- Ranked next-character probabilities
+
+The target label is the single character immediately following each fixed-length
+input window. The corpus is normalized while preserving meaningful line breaks,
+then split chronologically into 80% training, 10% validation, and 10% test data.
+This makes the output task-specific: the model performs next-character
+classification rather than producing unscored random sentences.
 
 ## Results
 The baseline experiment used a sequence length of 60 and the default eight training

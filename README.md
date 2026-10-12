@@ -12,10 +12,12 @@ streamlit run app.py
 
 Then open the Streamlit URL shown in the terminal.
 
-## Generate from terminal
+## Evaluate one next-character prediction from the terminal
 ```bash
 python generate.py --model lstm --seed "ROMEO: "
 ```
+The command prints the highest-probability next character and the top candidate
+probabilities. It does not generate random sentences.
 
 ## Reproduce the context-length experiment
 The default run uses sequence length 60. The report's short-versus-long comparison
@@ -55,19 +57,21 @@ This is a limited comparison on one dataset and training setup. The results do
 not establish that Simple RNN accuracy consistently decreases with context
 length, or that gated models are universally better for long-range dependencies.
 
-## Interpreting generated text
-Use the fixed-prompt comparison in the app to compare RNN, LSTM, and GRU at the
-same temperature. These are character-level next-character models trained on a
-small corpus, so occasional incoherent text is expected; validation accuracy
-around 38--40% measures the next-character task and does not guarantee fluent
-multi-character generation.
+## Evaluation and labels
+This is a supervised next-character classification task. Each input contains a
+fixed number of characters and its label is the single character immediately
+following that input. The corpus is normalized while preserving meaningful line
+breaks, and the examples are split chronologically into 80% training, 10%
+validation, and 10% held-out test data. `outputs/metrics.csv` records validation
+and test accuracy, cross-entropy loss, and test perplexity. The app displays the
+ranked next-character candidates and these measured metrics.
 
 ## Dataset
 The training script automatically downloads Tiny Shakespeare. If download fails, it uses `data/sample.txt`.
 
 ## Deliverables
 - `train.py` — model training
-- `generate.py` — sequence generation
+- `generate.py` — ranked next-character evaluation
 - `app.py` — interactive web interface
 - `utils.py` — preprocessing/prediction utilities
 - `PROJECT_REPORT.md` — report content

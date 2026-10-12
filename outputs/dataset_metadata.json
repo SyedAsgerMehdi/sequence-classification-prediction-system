@@ -1,0 +1,12 @@
+{
+  "task": "next_character_prediction",
+  "sequence_length": 60,
+  "label_definition": "The character immediately following each input sequence.",
+  "split": "chronological 80% train, 10% validation, 10% test",
+  "vocabulary_size": 65,
+  "samples": {
+    "train": 16000,
+    "validation": 2000,
+    "test": 2000
+  }
+}

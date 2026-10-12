@@ -1,6 +1,6 @@
 import os,json,numpy as np,pandas as pd,streamlit as st
 from tensorflow.keras.models import load_model
-from utils import generate,set_seed
+from utils import display_character,predict_next_character
 
 st.set_page_config(page_title="Sequence Prediction System",page_icon="🧠",layout="wide")
 st.title("🧠 Sequence Prediction System")
@@ -12,6 +12,11 @@ if not os.path.exists("outputs/metrics.csv"):
     st.stop()
 
 metrics=pd.read_csv("outputs/metrics.csv")
+required_metrics={"Test Accuracy","Test Loss","Test Perplexity"}
+if not required_metrics.issubset(metrics.columns):
+    st.warning("Existing metrics use the old validation-only format. Retrain the models to enable test metrics and perplexity.")
+    st.code("python train.py --model all")
+    st.stop()
 with open("outputs/char_to_idx.json",encoding="utf-8") as f: c2i=json.load(f)
 with open("outputs/idx_to_char.json",encoding="utf-8") as f: i2c=np.array(json.load(f)["characters"])
 
@@ -20,15 +25,14 @@ tab1,tab2,tab3=st.tabs(["🔮 Prediction","📊 Comparison","📚 About"])
 with tab1:
     model_name=st.selectbox("Choose architecture",["RNN","LSTM","GRU"])
     seed=st.text_input("Enter starting sequence","ROMEO: ")
-    col1,col2=st.columns(2)
-    with col1: length=st.slider("Characters to generate",50,500,200)
-    with col2: temp=st.slider("Temperature",0.2,1.5,0.8,0.1)
-    if st.button("Generate Prediction",type="primary"):
+    top_k=st.slider("Number of candidate characters",1,10,5)
+    if st.button("Predict next character",type="primary"):
         path=f"outputs/models/{model_name.lower()}.keras"
         model=load_model(path)
-        result=generate(model,seed,c2i,i2c,length,temp)
-        st.subheader("Generated Sequence")
-        st.text_area("Output",result,height=300)
+        predictions=predict_next_character(model,seed,c2i,i2c,top_k)
+        st.metric("Predicted next character",display_character(predictions[0][0]))
+        readable_predictions=[(display_character(character),probability) for character,probability in predictions]
+        st.dataframe(pd.DataFrame(readable_predictions,columns=["Character","Probability"]),use_container_width=True)
 
     st.divider()
     st.subheader("Fixed-prompt comparison")
@@ -36,32 +40,26 @@ with tab1:
         "Choose a prompt",
         ["ROMEO: ", "To be, or not to be: ", "KING: "]
     )
-    comparison_length=st.slider("Comparison characters",50,250,120,10)
-    comparison_temp=st.slider("Shared comparison temperature",0.2,1.5,0.8,0.1)
+    comparison_top_k=st.slider("Candidates per architecture",1,5,3)
     if st.button("Compare all architectures"):
-        set_seed(42)
         comparison_columns=st.columns(3)
         for column,architecture in zip(comparison_columns,["RNN","LSTM","GRU"]):
             model=load_model(f"outputs/models/{architecture.lower()}.keras")
-            generated=generate(model,prompt,c2i,i2c,comparison_length,comparison_temp)
+            predictions=predict_next_character(model,prompt,c2i,i2c,comparison_top_k)
             with column:
                 st.markdown(f"**{architecture}**")
-                st.text_area(
-                    f"{architecture} output",
-                    generated,
-                    height=220,
-                    key=f"comparison-{architecture}"
-                )
+                readable_predictions=[(display_character(character),probability) for character,probability in predictions]
+                st.dataframe(pd.DataFrame(readable_predictions,columns=["Character","Probability"]),hide_index=True)
         st.caption(
-            "These samples use the same prompt, length, temperature, and random seed. "
-            "Character-level models can still produce imperfect prose, especially on a small dataset."
+            "Each model receives the same prompt. Probabilities are measured on the next-character task; "
+            "they are not random sentence samples."
         )
 
 with tab2:
     st.subheader("Model Performance")
     st.dataframe(metrics,use_container_width=True)
-    st.bar_chart(metrics.set_index("Model")["Validation Accuracy"])
-    st.info("Compare validation accuracy, loss, training time and parameter count. Use the measured results in the final report.")
+    st.bar_chart(metrics.set_index("Model")[["Validation Accuracy","Test Accuracy"]])
+    st.info("Test accuracy, test loss and perplexity are calculated on the held-out final 10% of the corpus.")
 
     dependency_path="outputs/dependency_metrics.csv"
     if os.path.exists(dependency_path):
@@ -84,7 +82,7 @@ with tab2:
 
 with tab3:
     st.subheader("Project Objective")
-    st.write("The system predicts the next character from a fixed-length sequence and investigates how Simple RNN, LSTM and GRU handle short-term and long-term dependencies.")
+    st.write("The system predicts exactly one next character from a fixed-length English text sequence. It does not generate random sentences or translate text.")
     st.markdown("""
 **Simple RNN:** baseline recurrent architecture; useful for nearby dependencies but can struggle with long dependencies.
 
